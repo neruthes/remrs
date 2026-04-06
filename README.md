@@ -21,7 +21,7 @@ sudo remrs /etc/nginx/sites-enabled/default
 
 ## Fast Installation
 ```sh
-# TODO: Add a one-liner here later
+# sudo curl 'https://github.com/neruthes/remrs/releases/download/0.1.0/remrs' -o /usr/local/bin/remrs && sudo chmod +x /usr/local/bin/remrs
 ```
 
 
