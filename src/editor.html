@@ -5,22 +5,49 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/6.65.7/codemirror.min.js"></script>
     <style>
         body { margin: 0; display: flex; flex-direction: column; height: 100vh; background: #1e1e1e; color: white; font-family: sans-serif; }
-        #toolbar { padding: 10px; background: #333; display: flex; justify-content: space-between; }
+        #toolbar { padding: 10px; background: #333; display: flex; justify-content: space-between; align-items: center; }
         #editor { flex-grow: 1; font-family: 'JetBrains Mono NL', monospace; }
-        button { background: #007acc; color: white; border: none; padding: 8px 15px; cursor: pointer; }
+        .button-group { display: flex; gap: 10px; }
+        button { background: #007acc; color: white; border: none; padding: 8px 15px; cursor: pointer; border-radius: 2px; }
+        button:hover { background: #005fa3; }
+        button.secondary { background: #444; }
+        button.secondary:hover { background: #555; }
     </style>
 </head>
 <body>
     <div id="toolbar">
         <span>Editing: [[filename]]</span>
-        <button onclick="save()">Save (Ctrl+S)</button>
+        <div class="button-group">
+            <button class="secondary" onclick="fetchContent()">Fetch Current</button>
+            <button onclick="save()">Save (Ctrl+S)</button>
+        </div>
     </div>
     <textarea id="code" style="width:100%; height:90vh; background:#222; color:#fff; border:none; padding:10px;">[[content]]</textarea>
 
     <script>
         const token = "[[token]]";
+        const codeArea = document.getElementById('code');
+
+        async function fetchContent() {
+            if (!confirm("Discard local changes and fetch current file content from server?")) return;
+            
+            try {
+                const res = await fetch(`/content?token=${token}`);
+                if (res.ok) {
+                    const content = await res.text();
+                    codeArea.value = content;
+                    console.log("Content refreshed from disk.");
+                } else {
+                    alert("Failed to fetch content: " + res.statusText);
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Network error.");
+            }
+        }
+
         async function save() {
-            const content = document.getElementById('code').value;
+            const content = codeArea.value;
             const res = await fetch(`/?token=${token}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -29,6 +56,7 @@
             const msg = await res.text();
             console.log(msg);
         }
+
         document.addEventListener('keydown', e => {
             if ((e.ctrlKey || e.metaKey) && e.key === 's') {
                 e.preventDefault();

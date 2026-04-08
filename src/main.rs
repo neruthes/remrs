@@ -79,6 +79,21 @@ async fn update_file(
     }
 }
 
+// Add this handler function
+async fn get_file_content(
+    Query(params): Query<AuthQuery>,
+    State(state): State<Arc<AppState>>,
+) -> Result<String, (axum::http::StatusCode, String)> {
+    if params.token != state.token {
+        return Err((axum::http::StatusCode::UNAUTHORIZED, "Unauthorized".into()));
+    }
+    fs::read_to_string(&state.file_path)
+        .map_err(|e| (axum::http::StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+}
+
+
+
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = env::args().collect();
@@ -113,9 +128,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
         file_path: file_path.clone(),
         token: token.clone(),
     });
+
     let app = Router::new()
         .route("/", get(show_editor))
         .route("/", post(update_file))
+        .route("/content", get(get_file_content)) // <--- Add this line
         .with_state(state);
 
     let addr = SocketAddr::from(([0, 0, 0, 0], 0));
